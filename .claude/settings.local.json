@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx shadcn@latest *)",
+      "Bash(Remove-Item *)",
+      "Bash(npm run *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_network_request",
+      "mcp__playwright__browser_snapshot",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git init *)",
+      "Bash(git checkout *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
+}
