@@ -14,6 +14,7 @@ import { Calendar, ArrowLeft, Tag } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import NotionBlockRenderer from "@/components/features/NotionBlockRenderer"
 
 // ============================================================
 // 타입 정의
@@ -156,19 +157,8 @@ export default async function PostPage({ params }: PostPageProps) {
       </header>
 
       {/* 포스트 본문 */}
-      {/* TODO: Notion 블록 렌더러 구현 후 blocks 데이터 사용 */}
       <div className="prose prose-neutral dark:prose-invert max-w-none">
-        {post.blocks.length === 0 ? (
-          <p className="text-muted-foreground">본문 내용이 없습니다.</p>
-        ) : (
-          <div className="p-4 border border-dashed rounded-lg bg-muted/40">
-            <p className="text-sm text-muted-foreground">
-              Notion 블록 렌더러를 구현하면 여기에 본문이 표시됩니다.
-              <br />
-              총 {post.blocks.length}개의 블록이 로드되었습니다.
-            </p>
-          </div>
-        )}
+        <NotionBlockRenderer blocks={post.blocks} />
       </div>
 
       {/* 하단 내비게이션 */}
