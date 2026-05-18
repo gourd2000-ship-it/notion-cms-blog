@@ -1,10 +1,9 @@
 /**
- * @description 블로그 홈 페이지 (서버 컴포넌트)
+ * @description 전체 포스트 목록 페이지 (서버 컴포넌트)
  *
- * 발행된 포스트 목록과 카테고리 필터를 표시합니다.
- * Notion DB에서 데이터를 서버에서 직접 조회하여 렌더링합니다.
+ * Notion DB에서 발행된 모든 포스트를 조회하여 목록과 카테고리 필터를 표시합니다.
  *
- * 라우트: /
+ * 라우트: /posts
  */
 
 import type { Metadata } from "next"
@@ -19,8 +18,8 @@ import { MOCK_POSTS, MOCK_CATEGORIES } from "@/lib/mock-data"
 // ============================================================
 
 export const metadata: Metadata = {
-  title: siteConfig.name,
-  description: siteConfig.description,
+  title: `포스트 | ${siteConfig.name}`,
+  description: "발행된 모든 연구 기록과 기술 포스트를 확인하세요.",
 }
 
 // ============================================================
@@ -31,27 +30,23 @@ export const metadata: Metadata = {
  * @description Notion에서 포스트 목록과 카테고리를 조회합니다.
  * NOTION_TOKEN / NOTION_DATABASE_ID 환경 변수가 없으면 빈 배열을 반환합니다.
  */
-async function getHomePageData() {
-  // 환경 변수 미설정 시 개발 목업 데이터 반환
+async function getPostsPageData() {
   if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
     return { posts: MOCK_POSTS, categories: MOCK_CATEGORIES, isMock: true }
   }
 
   try {
-    // Notion 모듈은 서버에서만 실행되므로 동적 임포트 사용
     const { getPublishedPosts, getCategories } = await import("@/lib/notion")
     const [posts, categories] = await Promise.all([
       getPublishedPosts(),
       getCategories(),
     ])
-    // Notion DB에 데이터가 없을 경우 목업 데이터 폴백
     if (posts.length === 0) {
       return { posts: MOCK_POSTS, categories: MOCK_CATEGORIES, isMock: true }
     }
     return { posts, categories, isMock: false }
   } catch (error) {
-    // Notion API 호출 실패 시 목업 데이터로 폴백
-    console.error("홈 페이지 데이터 로딩 실패:", error)
+    console.error("포스트 목록 데이터 로딩 실패:", error)
     return { posts: MOCK_POSTS, categories: MOCK_CATEGORIES, isMock: true }
   }
 }
@@ -61,13 +56,12 @@ async function getHomePageData() {
 // ============================================================
 
 /**
- * @description 블로그 홈 페이지
- * @returns {Promise<JSX.Element>} 홈 페이지 UI
+ * @description 전체 포스트 목록 페이지
+ * @returns {Promise<JSX.Element>} 포스트 목록 UI
  */
-export default async function HomePage() {
-  const { posts, categories, isMock } = await getHomePageData()
+export default async function PostsPage() {
+  const { posts, categories, isMock } = await getPostsPageData()
 
-  // Category 타입에 맞게 변환
   const typedCategories: Category[] = categories.map((cat) => ({
     name: cat.name,
     count: cat.count,
@@ -77,11 +71,9 @@ export default async function HomePage() {
     <div className="mx-auto max-w-4xl px-6 py-12">
       {/* 페이지 헤더 */}
       <section className="mb-12">
-        <h1 className="text-3xl font-bold tracking-tight mb-3">
-          {siteConfig.name}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-3">포스트</h1>
         <p className="text-muted-foreground text-lg">
-          {siteConfig.description}
+          연구 기록과 기술 포스트 모음
         </p>
       </section>
 
