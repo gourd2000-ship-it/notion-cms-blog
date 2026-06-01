@@ -14,6 +14,7 @@ export const siteConfig: SiteConfig = {
   mainNav: [
     { title: "홈", href: "/" },
     { title: "포스트", href: "/posts" },
+    { title: "카테고리", href: "/categories" },
     { title: "소개", href: "/about" },
   ],
   sidebarNav: [],
