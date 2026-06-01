@@ -1,22 +1,18 @@
 /**
  * @description 카테고리 필터 컴포넌트
- * 블로그 홈 페이지에서 카테고리별로 포스트를 필터링하는 UI를 제공합니다.
- * "전체" 옵션을 포함하며, 선택된 카테고리를 시각적으로 강조합니다.
- *
- * 클라이언트 컴포넌트로 동작합니다 (상태 관리 필요).
+ * 레퍼런스 이미지의 해시태그 스타일 필 탭 형태로 디자인합니다.
+ * 선택된 카테고리는 다크 네이비로 강조됩니다.
  */
 
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import type { Category } from "@/lib/types"
 
 // ============================================================
 // 상수 정의
 // ============================================================
 
-/** 전체 카테고리를 나타내는 특수 값 */
 const ALL_CATEGORY = "전체"
 
 // ============================================================
@@ -24,13 +20,9 @@ const ALL_CATEGORY = "전체"
 // ============================================================
 
 interface CategoryFilterProps {
-  /** 표시할 카테고리 목록 */
   categories: Category[]
-  /** 현재 선택된 카테고리 (없으면 전체 표시) */
   selectedCategory?: string
-  /** 카테고리 선택 시 호출되는 콜백 */
   onCategoryChange: (category: string | undefined) => void
-  /** 추가 CSS 클래스 */
   className?: string
 }
 
@@ -39,15 +31,9 @@ interface CategoryFilterProps {
 // ============================================================
 
 /**
- * @description 카테고리 필터 버튼 그룹
+ * @description 카테고리 필터 탭 그룹
  * @param {CategoryFilterProps} props - 컴포넌트 props
  * @returns {JSX.Element} 카테고리 필터 UI
- * @example
- * <CategoryFilter
- *   categories={categories}
- *   selectedCategory={selected}
- *   onCategoryChange={setSelected}
- * />
  */
 const CategoryFilter = ({
   categories,
@@ -55,44 +41,37 @@ const CategoryFilter = ({
   onCategoryChange,
   className,
 }: CategoryFilterProps) => {
-  /**
-   * @description 카테고리 버튼 클릭 핸들러
-   * 현재 선택된 카테고리를 다시 클릭하면 선택 해제(전체 보기)합니다.
-   */
   const handleCategoryClick = (categoryName: string) => {
     if (categoryName === ALL_CATEGORY) {
-      // 전체 버튼 클릭 시 선택 해제
       onCategoryChange(undefined)
       return
     }
-
-    if (categoryName === selectedCategory) {
-      // 이미 선택된 카테고리 클릭 시 선택 해제
-      onCategoryChange(undefined)
-    } else {
-      onCategoryChange(categoryName)
-    }
+    onCategoryChange(categoryName === selectedCategory ? undefined : categoryName)
   }
 
   const isAllSelected = !selectedCategory
 
   return (
-    <div className={cn("flex flex-wrap gap-2", className)} role="group" aria-label="카테고리 필터">
-      {/* 전체 보기 버튼 */}
+    <div
+      className={cn("flex flex-wrap gap-2", className)}
+      role="group"
+      aria-label="카테고리 필터"
+    >
+      {/* 전체 탭 */}
       <button
         onClick={() => handleCategoryClick(ALL_CATEGORY)}
         aria-pressed={isAllSelected}
-        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+        className={cn(
+          "px-5 py-1.5 text-sm font-medium border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900",
+          isAllSelected
+            ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+            : "bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white"
+        )}
       >
-        <Badge
-          variant={isAllSelected ? "default" : "outline"}
-          className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1 text-sm"
-        >
-          전체
-        </Badge>
+        All
       </button>
 
-      {/* 카테고리별 버튼 */}
+      {/* 카테고리별 탭 */}
       {categories.map((category) => {
         const isSelected = selectedCategory === category.name
 
@@ -101,15 +80,15 @@ const CategoryFilter = ({
             key={category.name}
             onClick={() => handleCategoryClick(category.name)}
             aria-pressed={isSelected}
-            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+            className={cn(
+              "px-5 py-1.5 text-sm font-medium border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900",
+              isSelected
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white"
+                : "bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white"
+            )}
           >
-            <Badge
-              variant={isSelected ? "default" : "outline"}
-              className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1 text-sm"
-            >
-              {category.name}
-              <span className="ml-1.5 opacity-70">({category.count})</span>
-            </Badge>
+            #{category.name}
+            <span className="ml-1.5 opacity-60">({category.count})</span>
           </button>
         )
       })}
