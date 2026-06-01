@@ -6,6 +6,8 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     NOTION_TOKEN: z.string().min(1).optional(),
     NOTION_DATABASE_ID: z.string().min(1).optional(),
+    // On-demand Revalidation 시크릿 토큰 (/api/revalidate?secret=TOKEN)
+    REVALIDATE_SECRET: z.string().min(1).optional(),
   },
   client: {
     // NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -14,6 +16,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NOTION_TOKEN: process.env.NOTION_TOKEN,
     NOTION_DATABASE_ID: process.env.NOTION_DATABASE_ID,
+    REVALIDATE_SECRET: process.env.REVALIDATE_SECRET,
     // NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
 })

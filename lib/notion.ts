@@ -5,12 +5,18 @@
  * @notionhq/client v5.x 의 새로운 dataSources API를 사용합니다.
  * (v5에서는 databases.query() 대신 dataSources.query()를 사용합니다.)
  *
+ * 캐싱 전략:
+ * - @notionhq/client는 자체 SDK(fetch 미사용)이므로 Next.js fetch 캐싱 불가
+ * - unstable_cache 로 래핑하여 Next.js 데이터 캐시에 저장 (TTL: 300초 = 5분)
+ * - On-demand Revalidation은 app/api/revalidate/route.ts 에서 처리
+ *
  * 필수 환경 변수:
  * - NOTION_TOKEN: Notion Integration 토큰
  * - NOTION_DATABASE_ID: 블로그 포스트가 저장된 데이터베이스 ID (data_source_id)
  */
 
 import { Client } from "@notionhq/client"
+import { unstable_cache } from "next/cache"
 import type {
   QueryDataSourceResponse,
   QueryDataSourceParameters,
@@ -23,6 +29,18 @@ import type {
 } from "@notionhq/client/build/src/api-endpoints/blocks"
 import type { DatabaseObjectResponse } from "@notionhq/client/build/src/api-endpoints/databases"
 import type { Post, PostDetail, NotionBlock } from "@/lib/types"
+
+// ============================================================
+// 캐시 태그 상수
+// ============================================================
+
+/**
+ * @description On-demand Revalidation에서 사용할 캐시 태그 상수
+ * notion-posts-list: 포스트 목록·카테고리 조회에 사용 (무효화 시 목록 전체 갱신)
+ */
+export const CACHE_TAGS = {
+  POSTS_LIST: "notion-posts-list",
+} as const
 
 // ============================================================
 // Notion 클라이언트 초기화
@@ -121,19 +139,11 @@ function mapPageToPost(page: PageObjectResponse): Post {
 }
 
 // ============================================================
-// 공개 API 함수
+// 내부 Notion 조회 함수 (unstable_cache 래핑 전 원본)
 // ============================================================
 
-/**
- * @description 발행됨 상태의 포스트 전체 목록을 조회합니다.
- * Status = "발행됨" 필터를 적용하며, 발행일 내림차순으로 정렬합니다.
- *
- * @notionhq/client v5에서는 databases.query() 대신
- * dataSources.query({ data_source_id }) 를 사용합니다.
- *
- * @returns {Promise<Post[]>} 발행된 포스트 배열
- */
-export async function getPublishedPosts(): Promise<Post[]> {
+/** Status = "발행됨" 포스트 목록 조회 원본 함수 */
+async function _getPublishedPosts(): Promise<Post[]> {
   const dataSourceId = await getDataSourceId()
 
   const queryParams: QueryDataSourceParameters = {
@@ -154,7 +164,6 @@ export async function getPublishedPosts(): Promise<Post[]> {
 
   const response: QueryDataSourceResponse = await notion.dataSources.query(queryParams)
 
-  // PageObjectResponse 타입만 필터링 (properties 필드 보유 여부로 구분)
   const pages = response.results.filter(
     (result): result is PageObjectResponse =>
       result.object === "page" && "properties" in result
@@ -163,18 +172,11 @@ export async function getPublishedPosts(): Promise<Post[]> {
   return pages.map(mapPageToPost)
 }
 
-/**
- * @description 특정 ID의 포스트 상세 정보를 조회합니다.
- * 포스트 메타데이터와 본문 블록을 함께 반환합니다.
- * @param {string} id - Notion 페이지 ID
- * @returns {Promise<PostDetail | null>} 포스트 상세 데이터, 없으면 null
- */
-export async function getPostById(id: string): Promise<PostDetail | null> {
+/** 특정 ID 포스트 상세 조회 원본 함수 */
+async function _getPostById(id: string): Promise<PostDetail | null> {
   try {
-    // 페이지 메타데이터 조회
     const page: GetPageResponse = await notion.pages.retrieve({ page_id: id })
 
-    // properties 필드가 없는 경우(PartialPageObjectResponse) 처리
     if (!("properties" in page)) {
       return null
     }
@@ -182,7 +184,6 @@ export async function getPostById(id: string): Promise<PostDetail | null> {
     const fullPage = page as PageObjectResponse
     const post = mapPageToPost(fullPage)
 
-    // 페이지 블록(본문) 조회
     const blocksResponse: ListBlockChildrenResponse = await notion.blocks.children.list({
       block_id: id,
     })
@@ -199,18 +200,13 @@ export async function getPostById(id: string): Promise<PostDetail | null> {
       blocks,
     }
   } catch (error) {
-    // 페이지가 존재하지 않거나 접근 권한이 없는 경우
     console.error(`포스트 조회 실패 (id: ${id}):`, error)
     return null
   }
 }
 
-/**
- * @description 특정 카테고리의 발행된 포스트 목록을 조회합니다.
- * @param {string} category - 조회할 카테고리 이름
- * @returns {Promise<Post[]>} 해당 카테고리의 포스트 배열
- */
-export async function getPostsByCategory(category: string): Promise<Post[]> {
+/** 특정 카테고리 포스트 목록 조회 원본 함수 */
+async function _getPostsByCategory(category: string): Promise<Post[]> {
   const dataSourceId = await getDataSourceId()
 
   const queryParams: QueryDataSourceParameters = {
@@ -249,14 +245,61 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
   return pages.map(mapPageToPost)
 }
 
+// ============================================================
+// 공개 API 함수 — unstable_cache 래핑으로 Next.js 데이터 캐시 적용
+// ============================================================
+
+/**
+ * @description 발행됨 상태의 포스트 전체 목록을 조회합니다.
+ * unstable_cache: TTL 300초(5분), 태그 "notion-posts-list"
+ * On-demand 갱신: /api/revalidate?secret=TOKEN&tag=notion-posts-list
+ *
+ * @returns {Promise<Post[]>} 발행된 포스트 배열
+ */
+export const getPublishedPosts = unstable_cache(
+  _getPublishedPosts,
+  ["notion-published-posts"],
+  { tags: [CACHE_TAGS.POSTS_LIST], revalidate: 300 }
+)
+
+/**
+ * @description 특정 ID의 포스트 상세 정보를 조회합니다.
+ * unstable_cache: TTL 300초(5분), 태그 "notion-posts-list"
+ * 함수 인자(id)가 캐시 키에 자동 포함되어 포스트별로 독립 캐시됨.
+ *
+ * @param {string} id - Notion 페이지 ID
+ * @returns {Promise<PostDetail | null>} 포스트 상세 데이터, 없으면 null
+ */
+export const getPostById = unstable_cache(
+  _getPostById,
+  ["notion-post-by-id"],
+  { tags: [CACHE_TAGS.POSTS_LIST], revalidate: 300 }
+)
+
+/**
+ * @description 특정 카테고리의 발행된 포스트 목록을 조회합니다.
+ * unstable_cache: TTL 300초(5분), 태그 "notion-posts-list"
+ * 함수 인자(category)가 캐시 키에 자동 포함되어 카테고리별로 독립 캐시됨.
+ *
+ * @param {string} category - 조회할 카테고리 이름
+ * @returns {Promise<Post[]>} 해당 카테고리의 포스트 배열
+ */
+export const getPostsByCategory = unstable_cache(
+  _getPostsByCategory,
+  ["notion-posts-by-category"],
+  { tags: [CACHE_TAGS.POSTS_LIST], revalidate: 300 }
+)
+
 /**
  * @description 발행된 포스트에서 카테고리 목록과 각 포스트 수를 집계합니다.
+ * getPublishedPosts()가 이미 캐시되므로 별도 unstable_cache 래핑 불필요.
+ *
  * @returns {Promise<Array<{ name: string; count: number }>>} 카테고리 배열 (포스트 수 내림차순)
  */
 export async function getCategories(): Promise<Array<{ name: string; count: number }>> {
+  // getPublishedPosts가 캐시된 함수이므로 이 호출도 캐시 혜택을 받음
   const posts = await getPublishedPosts()
 
-  // 카테고리별 포스트 수 집계
   const categoryMap = posts.reduce<Record<string, number>>((acc, post) => {
     const cat = post.category
     acc[cat] = (acc[cat] ?? 0) + 1
