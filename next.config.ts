@@ -23,6 +23,8 @@ const ContentSecurityPolicy = [
     "https://prod-files-secure.s3.us-west-2.amazonaws.com",
     "https://www.notion.so",
     "https://*.notion.so",
+    // Notion 커버에서 Unsplash 이미지 선택 시 필요
+    "https://images.unsplash.com",
   ].join(" "),
   "font-src 'self' data:",
   isDev
