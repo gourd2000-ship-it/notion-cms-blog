@@ -13,6 +13,7 @@ import { siteConfig } from "@/config/site"
 import PostListClient from "@/components/features/PostListClient"
 import type { Category } from "@/lib/types"
 import { MOCK_POSTS, MOCK_CATEGORIES } from "@/lib/mock-data"
+import { env } from "@/lib/env"
 
 // ============================================================
 // 메타데이터
@@ -35,7 +36,7 @@ export const revalidate = 300
  * NOTION_TOKEN / NOTION_DATABASE_ID 환경 변수가 없으면 목업 데이터를 반환합니다.
  */
 async function getHomePageData() {
-  if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
+  if (!env.NOTION_TOKEN || !env.NOTION_DATABASE_ID) {
     return { posts: MOCK_POSTS, categories: MOCK_CATEGORIES, isMock: true }
   }
 

@@ -29,6 +29,8 @@ import type {
 } from "@notionhq/client/build/src/api-endpoints/blocks"
 import type { DatabaseObjectResponse } from "@notionhq/client/build/src/api-endpoints/databases"
 import type { Post, PostDetail, NotionBlock } from "@/lib/types"
+// Zod 검증을 통과한 환경 변수 사용 (process.env 직접 접근 대신)
+import { env } from "@/lib/env"
 
 // ============================================================
 // 캐시 태그 상수
@@ -51,7 +53,7 @@ export const CACHE_TAGS = {
  * 서버 사이드에서만 호출되어야 합니다.
  */
 const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
+  auth: env.NOTION_TOKEN,
 })
 
 // databases.query()가 v5에서 제거됨에 따라 dataSources.query()를 사용.
@@ -62,7 +64,7 @@ let cachedDataSourceId: string | null = null
 async function getDataSourceId(): Promise<string> {
   if (cachedDataSourceId) return cachedDataSourceId
 
-  const databaseId = process.env.NOTION_DATABASE_ID
+  const databaseId = env.NOTION_DATABASE_ID
   if (!databaseId) throw new Error("NOTION_DATABASE_ID 환경 변수가 설정되지 않았습니다.")
 
   const db = await notion.databases.retrieve({ database_id: databaseId })

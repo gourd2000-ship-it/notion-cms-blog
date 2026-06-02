@@ -12,6 +12,7 @@ import Link from "next/link"
 import { FolderOpen } from "lucide-react"
 
 import { getCategories } from "@/lib/notion"
+import { env } from "@/lib/env"
 
 // ISR: 5분마다 재검증 (Notion Rate Limit 대응)
 export const revalidate = 300
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default async function CategoriesPage() {
   let categories: Array<{ name: string; count: number }> = []
 
-  if (process.env.NOTION_TOKEN && process.env.NOTION_DATABASE_ID) {
+  if (env.NOTION_TOKEN && env.NOTION_DATABASE_ID) {
     try {
       categories = await getCategories()
     } catch (error) {

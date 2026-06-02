@@ -13,6 +13,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 import PostCard from "@/components/features/PostCard"
+import { env } from "@/lib/env"
 
 // ============================================================
 // 타입 정의
@@ -26,12 +27,31 @@ interface CategoryPageProps {
 }
 
 // ============================================================
+// URL 디코딩 헬퍼
+// ============================================================
+
+/**
+ * @description URL 디코딩을 안전하게 수행합니다.
+ * malformed URI(예: 끝이 `%`인 문자열)가 URIError를 던지는 경우 null을 반환합니다.
+ * @param {string} value - 디코딩할 URL 인코딩 문자열
+ * @returns {string | null} 디코딩된 문자열, 실패 시 null
+ */
+function safeDecode(value: string): string | null {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return null
+  }
+}
+
+// ============================================================
 // 메타데이터 생성
 // ============================================================
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params
-  const decodedCategory = decodeURIComponent(category)
+  // 디코딩 실패 시 원본 값으로 폴백 (메타데이터는 비치명적)
+  const decodedCategory = safeDecode(category) ?? category
 
   return {
     title: `${decodedCategory} | 카테고리`,
@@ -48,10 +68,13 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params
-  const decodedCategory = decodeURIComponent(category)
+
+  // malformed URI 입력 시 404 처리 (500 방지)
+  const decodedCategory = safeDecode(category)
+  if (decodedCategory === null) notFound()
 
   // 환경 변수 미설정 시 빈 목록 표시
-  if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
+  if (!env.NOTION_TOKEN || !env.NOTION_DATABASE_ID) {
     return (
       <>
         <div className="bg-slate-900 dark:bg-slate-950 border-b border-slate-800">
