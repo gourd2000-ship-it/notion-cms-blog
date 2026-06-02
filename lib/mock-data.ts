@@ -14,6 +14,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["Next.js", "React", "TypeScript"],
     publishedAt: "2026-05-01",
     status: "발행됨",
+    coverImage: null,
   },
   {
     id: "mock-2",
@@ -22,6 +23,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["GPT-4", "AI", "자동화"],
     publishedAt: "2026-04-20",
     status: "발행됨",
+    coverImage: null,
   },
   {
     id: "mock-3",
@@ -30,6 +32,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["Tailwind", "CSS"],
     publishedAt: "2026-04-10",
     status: "발행됨",
+    coverImage: null,
   },
   {
     id: "mock-4",
@@ -38,6 +41,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["Claude", "RAG", "LLM"],
     publishedAt: "2026-03-28",
     status: "발행됨",
+    coverImage: null,
   },
   {
     id: "mock-5",
@@ -46,6 +50,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["shadcn", "React", "UI"],
     publishedAt: "2026-03-15",
     status: "발행됨",
+    coverImage: null,
   },
   {
     id: "mock-6",
@@ -54,6 +59,7 @@ export const MOCK_POSTS: Post[] = [
     tags: ["독서", "글쓰기"],
     publishedAt: "2026-03-01",
     status: "발행됨",
+    coverImage: null,
   },
 ]
 

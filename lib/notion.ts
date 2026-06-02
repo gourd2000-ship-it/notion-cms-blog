@@ -130,6 +130,15 @@ function mapPageToPost(page: PageObjectResponse): Post {
       : "초안"
   const status: "초안" | "발행됨" = statusValue === "발행됨" ? "발행됨" : "초안"
 
+  // 커버 이미지 추출 (file 타입은 1시간 만료 — ISR 5분 갱신으로 완화)
+  const cover = page.cover
+  const coverImage =
+    cover?.type === "external"
+      ? cover.external.url
+      : cover?.type === "file"
+        ? cover.file.url
+        : null
+
   return {
     id: page.id,
     title,
@@ -137,6 +146,7 @@ function mapPageToPost(page: PageObjectResponse): Post {
     tags,
     publishedAt,
     status,
+    coverImage,
   }
 }
 

@@ -46,6 +46,8 @@ export interface Post {
   tags: string[]
   publishedAt: string
   status: "초안" | "발행됨"
+  /** Notion 페이지 커버 이미지 URL. 없으면 null (카드 그라데이션 폴백) */
+  coverImage: string | null
 }
 
 /**

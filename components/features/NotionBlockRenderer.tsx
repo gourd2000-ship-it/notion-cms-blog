@@ -11,27 +11,7 @@
  */
 
 import type { NotionBlock } from "@/lib/types"
-
-// ============================================================
-// 이미지 URL 검증 유틸리티
-// ============================================================
-
-/**
- * @description 이미지 URL이 렌더링하기 안전한지 검증합니다.
- * https: 프로토콜만 허용하여 javascript:, data: 등 위험 스킴을 차단합니다.
- * Notion 콘텐츠는 신뢰된 작성자가 관리하지만 방어적 코딩으로 추가합니다.
- * @param {string} url - 검증할 이미지 URL
- * @returns {boolean} https: 프로토콜이면 true
- */
-function isSafeImageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    return parsed.protocol === "https:"
-  } catch {
-    // 파싱 불가능한 URL (상대 경로 포함) 차단
-    return false
-  }
-}
+import { isSafeImageUrl } from "@/lib/utils"
 
 // ============================================================
 // 인라인 서식 타입

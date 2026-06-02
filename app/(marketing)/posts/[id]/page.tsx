@@ -15,6 +15,8 @@ import { Calendar, ArrowLeft, ArrowRight, Tag } from "lucide-react"
 
 import type { Post } from "@/lib/types"
 import NotionBlockRenderer from "@/components/features/NotionBlockRenderer"
+import { isSafeImageUrl } from "@/lib/utils"
+import { env } from "@/lib/env"
 
 // ============================================================
 // 타입 정의
@@ -37,7 +39,7 @@ interface PostPageProps {
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { id } = await params
 
-  if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
+  if (!env.NOTION_TOKEN || !env.NOTION_DATABASE_ID) {
     return { title: "포스트" }
   }
 
@@ -147,7 +149,7 @@ function PostNavigation({ prevPost, nextPost }: PostNavProps) {
 export default async function PostPage({ params }: PostPageProps) {
   const { id } = await params
 
-  if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
+  if (!env.NOTION_TOKEN || !env.NOTION_DATABASE_ID) {
     notFound()
   }
 
@@ -188,8 +190,21 @@ export default async function PostPage({ params }: PostPageProps) {
   return (
     <>
       {/* 포스트 히어로 헤더 */}
-      <div className="bg-slate-900 dark:bg-slate-950 border-b border-slate-800">
-        <div className="mx-auto max-w-4xl px-6 py-14 md:py-20">
+      <div className="relative bg-slate-900 dark:bg-slate-950 border-b border-slate-800 overflow-hidden">
+        {/* 커버 이미지 배경 (있을 때만) */}
+        {post.coverImage && isSafeImageUrl(post.coverImage) && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.coverImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* 텍스트 가독성을 위한 어두운 오버레이 */}
+            <div className="absolute inset-0 bg-slate-900/75" />
+          </>
+        )}
+        <div className="relative z-10 mx-auto max-w-4xl px-6 py-14 md:py-20">
           {/* 카테고리 배지 */}
           <div className="mb-5">
             <Link

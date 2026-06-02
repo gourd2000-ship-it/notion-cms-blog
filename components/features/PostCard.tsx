@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Calendar } from "lucide-react"
 
 import type { Post } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, isSafeImageUrl } from "@/lib/utils"
 
 // ============================================================
 // 카테고리별 컬러 매핑
@@ -72,11 +72,36 @@ const PostCard = ({ post, className }: PostCardProps) => {
         className
       )}
     >
-      {/* 이미지 플레이스홀더 영역 */}
-      <div className={cn("relative h-48 bg-gradient-to-br overflow-hidden", gradient)}>
-        {/* 장식 원형 요소 */}
-        <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-white/5" />
-        <div className="absolute top-4 right-4 w-16 h-16 rounded-full bg-white/5" />
+      {/* 썸네일 영역 — 커버 있으면 이미지, 없으면 카테고리 그라데이션 폴백 */}
+      <div className={cn(
+        "relative h-48 overflow-hidden",
+        post.coverImage && isSafeImageUrl(post.coverImage)
+          ? "bg-slate-900"
+          : cn("bg-gradient-to-br", gradient)
+      )}>
+        {post.coverImage && isSafeImageUrl(post.coverImage) ? (
+          <>
+            {/* Notion 커버 이미지 (1시간 만료 URL이므로 next/image 캐싱 미사용) */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* 배지 가독성을 위한 상단 그라데이션 오버레이 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
+          </>
+        ) : (
+          <>
+            {/* 그라데이션 폴백: 장식 원형 요소 */}
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-white/5" />
+            <div className="absolute top-4 right-4 w-16 h-16 rounded-full bg-white/5" />
+            {/* 카테고리 이니셜 (배경 장식) */}
+            <div className="absolute bottom-4 right-6 text-6xl font-black text-white/10 select-none leading-none">
+              {post.category.slice(0, 1)}
+            </div>
+          </>
+        )}
 
         {/* 카테고리 배지 — z-10으로 Stretched Link 위에 위치, 카테고리 페이지로 이동 */}
         <div className="absolute top-4 left-4 z-10">
@@ -86,11 +111,6 @@ const PostCard = ({ post, className }: PostCardProps) => {
           >
             {post.category}
           </Link>
-        </div>
-
-        {/* 카테고리 이니셜 (배경 장식) */}
-        <div className="absolute bottom-4 right-6 text-6xl font-black text-white/10 select-none leading-none">
-          {post.category.slice(0, 1)}
         </div>
       </div>
 
